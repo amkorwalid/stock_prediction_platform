@@ -1,4 +1,4 @@
-type Ticker = {
+export type Ticker = {
   symbol: string;
   company: string;
   exchange: string;
@@ -9,7 +9,7 @@ type PaginatedTickers = {
   items: Ticker[];
 };
 
-type NewsArticle = {
+export type NewsArticle = {
   article_id: string;
   symbol: string;
   headline: string;
@@ -21,7 +21,7 @@ type PaginatedNews = {
   items: NewsArticle[];
 };
 
-type SentimentRow = {
+export type SentimentRow = {
   symbol: string;
   sentiment_label: "Positive" | "Neutral" | "Negative";
   sentiment_score: number;
@@ -40,13 +40,24 @@ type LatestClassificationPrediction = {
   prob_down: number;
 };
 
-type LatestPrediction = {
+export type LatestPrediction = {
   symbol: string;
   regression: Record<string, LatestRegressionPrediction>;
   classification: Record<string, LatestClassificationPrediction>;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
+export const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
+
+export function getApiDocsUrl(): string {
+  if (API_BASE.endsWith("/api/")) {
+    return `${API_BASE.slice(0, -5)}/docs`;
+  }
+  if (API_BASE.endsWith("/api")) {
+    return `${API_BASE.slice(0, -4)}/docs`;
+  }
+  return `${API_BASE}/docs`;
+}
 
 async function request<T>(path: string): Promise<T | null> {
   try {

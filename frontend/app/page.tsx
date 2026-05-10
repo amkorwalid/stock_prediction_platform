@@ -1,7 +1,7 @@
 import Link from "next/link";
+import { getApiDocsUrl } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
-const API_DOCS_URL = `${API_BASE.replace(/\/api\/?$/, "")}/docs`;
+const API_DOCS_URL = getApiDocsUrl();
 
 export default function Home() {
   return (

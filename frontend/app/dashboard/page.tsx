@@ -15,9 +15,20 @@ function sentimentColor(label?: string) {
   return "text-yellow-300";
 }
 
-export default async function DashboardPage() {
+type DashboardPageProps = {
+  searchParams?: Promise<{ symbol?: string }>;
+};
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const stocks = await getStocks(8);
-  const activeSymbol = stocks[0]?.symbol ?? DEFAULT_SYMBOL;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const requestedSymbol = resolvedSearchParams?.symbol?.toUpperCase();
+  const hasRequestedSymbol = requestedSymbol
+    ? stocks.some((stock) => stock.symbol === requestedSymbol)
+    : false;
+  const activeSymbol = hasRequestedSymbol
+    ? (requestedSymbol as string)
+    : (stocks[0]?.symbol ?? DEFAULT_SYMBOL);
 
   const [prediction, news, sentiment] = await Promise.all([
     getLatestPrediction(activeSymbol),
@@ -47,7 +58,12 @@ export default async function DashboardPage() {
           {stocks.map((stock) => (
             <article key={stock.symbol} className="panel p-4">
               <p className="text-xs subtle">{stock.exchange}</p>
-              <p className="mt-1 text-lg font-semibold">{stock.symbol}</p>
+              <Link
+                href={`/dashboard?symbol=${encodeURIComponent(stock.symbol)}`}
+                className={`mt-1 block text-lg font-semibold ${stock.symbol === activeSymbol ? "text-[var(--accent)]" : ""}`}
+              >
+                {stock.symbol}
+              </Link>
               <p className="mt-1 line-clamp-1 text-sm subtle">{stock.company}</p>
             </article>
           ))}
