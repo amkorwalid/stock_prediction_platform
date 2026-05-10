@@ -54,7 +54,7 @@ export default function Home() {
           </article>
         </section>
 
-        <section className="panel border-[color:var(--negative)] bg-[linear-gradient(180deg,#231222_0%,#1a1024_100%)] p-5">
+        <section className="panel border-[color:var(--negative)] bg-[var(--warning-gradient)] p-5">
           <p className="text-xs font-semibold tracking-[0.18em] text-[var(--negative)]">IMPORTANT</p>
           <p className="mt-2 text-sm md:text-base">
             This project is for <strong>educational purposes only</strong>. It is not financial

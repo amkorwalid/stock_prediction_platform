@@ -10,6 +10,8 @@
   --accent: #44b7ff;
   --positive: #2fd57c;
   --negative: #ff6b84;
+  --neutral: #fde047;
+  --warning-gradient: linear-gradient(180deg, #231222 0%, #1a1024 100%);
 }
 
 @theme inline {

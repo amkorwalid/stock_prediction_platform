@@ -12,7 +12,7 @@ const DEFAULT_SYMBOL = "AAPL";
 function sentimentColor(label?: string) {
   if (label === "Positive") return "text-[var(--positive)]";
   if (label === "Negative") return "text-[var(--negative)]";
-  return "text-yellow-300";
+  return "text-[var(--neutral)]";
 }
 
 function formatProbability(value: number) {
