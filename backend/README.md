@@ -2,6 +2,13 @@
 
 This backend is a minimal implementation of the API in `docs/api/design.yaml`.
 
+## Configuration
+
+Set either:
+
+- `BACKEND_DATABASE_URL`, or
+- `DB_HOST`, `DB_PORT`, `DB_NAME`, `BACKEND_USER_USERNAME`, `BACKEND_USER_PASSWORD`
+
 ## Run locally
 
 ```bash

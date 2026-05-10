@@ -156,8 +156,8 @@ class ModelRegistryEntry(BaseModel):
     feature_set: Literal["price_only", "price+news", "news_only"]
     training_start_date: date
     training_end_date: date
-    val_metric_name: str
-    val_metric_value: float
+    val_metric_name: str | None = None
+    val_metric_value: float | None = None
     is_champion: bool
     registered_at: datetime
 
