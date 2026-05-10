@@ -168,7 +168,7 @@ class ModelPerformance(BaseModel):
     symbol: str | None = None
     eval_date: date
     horizon_days: int
-    eval_window_days: int
+    eval_window_days: int | None = None
     n_samples: int
     mae: float | None = None
     rmse: float | None = None
