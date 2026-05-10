@@ -23,12 +23,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const stocks = await getStocks(8);
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const requestedSymbol = resolvedSearchParams?.symbol?.toUpperCase();
-  const hasRequestedSymbol = requestedSymbol
-    ? stocks.some((stock) => stock.symbol === requestedSymbol)
-    : false;
-  const activeSymbol = hasRequestedSymbol
-    ? (requestedSymbol as string)
-    : (stocks[0]?.symbol ?? DEFAULT_SYMBOL);
+  const selectedSymbol = requestedSymbol
+    ? stocks.find((stock) => stock.symbol === requestedSymbol)?.symbol
+    : undefined;
+  const activeSymbol = selectedSymbol ?? stocks[0]?.symbol ?? DEFAULT_SYMBOL;
 
   const [prediction, news, sentiment] = await Promise.all([
     getLatestPrediction(activeSymbol),
