@@ -1,898 +1,892 @@
 openapi: 3.0.3
 info:
-  title: Stock Prediction Platform API
-  description: |
-    REST API for the Stock Prediction Platform.
-  version: 1.0.0
-  contact:
-    name: Code Forge
+    title: Stock Prediction Platform API
+    description: |
+        REST API for the Stock Prediction Platform.
+    version: 1.0.0
+    contact:
+        name: Code Forge
 
 servers:
-  - url: https://api.yourdomain.com
-    description: Production (via Nginx)
-  - url: http://localhost:8000
-    description: Local FastAPI dev server
+    - url: https://api.yourdomain.com
+      description: Production (via Nginx)
+    - url: http://localhost:8000
+      description: Local FastAPI dev server
 
 security:
-  - BearerAuth: []
+    - BearerAuth: []
 
 tags:
-  - name: stocks
-    description: Stock metadata and OHLCV price data
-  - name: news
-    description: Financial news articles ingested from News API
-  - name: news-analysis
-    description: AI-powered news analysis results
-  - name: predictions
-    description: ML model predictions (regression & classification)
+    - name: stocks
+      description: Stock metadata and OHLCV price data
+    - name: news
+      description: Financial news articles ingested from News API
+    - name: news-analysis
+      description: AI-powered news analysis results
+    - name: predictions
+      description: ML model predictions (regression & classification)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PATHS
 # ─────────────────────────────────────────────────────────────────────────────
 paths:
+    # ── STOCKS ────────────────────────────────────────────────────────────────
 
-    
-  # ── STOCKS ────────────────────────────────────────────────────────────────
+    /api/stocks:
+        get:
+            tags: [stocks]
+            summary: List all tracked tickers
+            parameters:
+                - name: sector
+                  in: query
+                  schema:
+                      type: string
+                  description: Filter by sector (e.g. Technology)
+                - name: exchange
+                  in: query
+                  schema:
+                      type: string
+                  description: Filter by exchange (e.g. NASDAQ)
+                - name: is_active
+                  in: query
+                  schema:
+                      type: boolean
+                      default: true
+                - $ref: "#/components/parameters/Limit"
+                - $ref: "#/components/parameters/Offset"
+            responses:
+                "200":
+                    description: Paginated list of tickers
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/PaginatedTickers"
 
-  /stocks:
-    get:
-      tags: [stocks]
-      summary: List all tracked tickers
-      parameters:
-        - name: sector
-          in: query
-          schema:
-            type: string
-          description: Filter by sector (e.g. Technology)
-        - name: exchange
-          in: query
-          schema:
-            type: string
-          description: Filter by exchange (e.g. NASDAQ)
-        - name: is_active
-          in: query
-          schema:
-            type: boolean
-            default: true
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-      responses:
-        '200':
-          description: Paginated list of tickers
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedTickers'
+    /api/stocks/{symbol}:
+        get:
+            tags: [stocks]
+            summary: Get metadata for a single ticker
+            parameters:
+                - $ref: "#/components/parameters/Symbol"
+            responses:
+                "200":
+                    description: Ticker details
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Ticker"
+                "404":
+                    $ref: "#/components/responses/NotFound"
 
-  /stocks/{symbol}:
-    get:
-      tags: [stocks]
-      summary: Get metadata for a single ticker
-      parameters:
-        - $ref: '#/components/parameters/Symbol'
-      responses:
-        '200':
-          description: Ticker details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Ticker'
-        '404':
-          $ref: '#/components/responses/NotFound'
+    /api/stocks/{symbol}/prices:
+        get:
+            tags: [stocks]
+            summary: Get historical OHLCV prices for a ticker
+            parameters:
+                - $ref: "#/components/parameters/Symbol"
+                - name: from
+                  in: query
+                  required: true
+                  schema:
+                      type: string
+                      format: date
+                  example: "2024-01-01"
+                - name: to
+                  in: query
+                  schema:
+                      type: string
+                      format: date
+                  example: "2024-12-31"
+            responses:
+                "200":
+                    description: List of daily OHLCV records
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/OHLCVBar"
+                "404":
+                    $ref: "#/components/responses/NotFound"
 
-  /stocks/{symbol}/prices:
-    get:
-      tags: [stocks]
-      summary: Get historical OHLCV prices for a ticker
-      parameters:
-        - $ref: '#/components/parameters/Symbol'
-        - name: from
-          in: query
-          required: true
-          schema:
-            type: string
-            format: date
-          example: '2024-01-01'
-        - name: to
-          in: query
-          schema:
-            type: string
-            format: date
-          example: '2024-12-31'
-      responses:
-        '200':
-          description: List of daily OHLCV records
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/OHLCVBar'
-        '404':
-          $ref: '#/components/responses/NotFound'
+    /api/stocks/{symbol}/technical:
+        get:
+            tags: [stocks]
+            summary: Get pre-computed technical indicators for a ticker
+            parameters:
+                - $ref: "#/components/parameters/Symbol"
+                - name: from
+                  in: query
+                  schema:
+                      type: string
+                      format: date
+                - name: to
+                  in: query
+                  schema:
+                      type: string
+                      format: date
+            responses:
+                "200":
+                    description: Technical indicator rows
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/TechnicalFeatures"
+                "404":
+                    $ref: "#/components/responses/NotFound"
+    # ── NEWS ──────────────────────────────────────────────────────────────────
 
-  /stocks/{symbol}/technical:
-    get:
-      tags: [stocks]
-      summary: Get pre-computed technical indicators for a ticker
-      parameters:
-        - $ref: '#/components/parameters/Symbol'
-        - name: from
-          in: query
-          schema:
-            type: string
-            format: date
-        - name: to
-          in: query
-          schema:
-            type: string
-            format: date
-      responses:
-        '200':
-          description: Technical indicator rows
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TechnicalFeatures'
-        '404':
-          $ref: '#/components/responses/NotFound'
-  # ── NEWS ──────────────────────────────────────────────────────────────────
+    /api/news:
+        get:
+            tags: [news]
+            summary: List news articles (optionally filtered by ticker or date)
+            parameters:
+                - name: symbol
+                  in: query
+                  schema:
+                      type: string
+                  description: Filter by ticker symbol
+                - name: from
+                  in: query
+                  schema:
+                      type: string
+                      format: date
+                - name: to
+                  in: query
+                  schema:
+                      type: string
+                      format: date
+                - name: market_session
+                  in: query
+                  schema:
+                      type: string
+                      enum: [pre_market, intraday, after_hours, overnight]
+                - $ref: "#/components/parameters/Limit"
+                - $ref: "#/components/parameters/Offset"
+            responses:
+                "200":
+                    description: Paginated list of news articles
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/PaginatedNews"
 
-  /news:
-    get:
-      tags: [news]
-      summary: List news articles (optionally filtered by ticker or date)
-      parameters:
-        - name: symbol
-          in: query
-          schema:
-            type: string
-          description: Filter by ticker symbol
-        - name: from
-          in: query
-          schema:
-            type: string
-            format: date
-        - name: to
-          in: query
-          schema:
-            type: string
-            format: date
-        - name: market_session
-          in: query
-          schema:
-            type: string
-            enum: [pre_market, intraday, after_hours, overnight]
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-      responses:
-        '200':
-          description: Paginated list of news articles
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedNews'
+    /api/news/{article_id}:
+        get:
+            tags: [news]
+            summary: Get a single news article by ID
+            parameters:
+                - name: article_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                      format: uuid
+            responses:
+                "200":
+                    description: Article detail
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/NewsArticle"
+                "404":
+                    $ref: "#/components/responses/NotFound"
 
-  /news/{article_id}:
-    get:
-      tags: [news]
-      summary: Get a single news article by ID
-      parameters:
-        - name: article_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Article detail
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NewsArticle'
-        '404':
-          $ref: '#/components/responses/NotFound'
+    # ── NEWS ANALYSIS ─────────────────────────────────────────────────────────
 
-  # ── NEWS ANALYSIS ─────────────────────────────────────────────────────────
+    /api/news-analysis:
+        get:
+            tags: [news-analysis]
+            summary: Get aggregated sentiment analysis for all tickers
+            parameters:
+                - name: symbol
+                  in: query
+                  schema:
+                      type: string
+                  description: Filter by ticker symbol
+                - name: from
+                  in: query
+                  schema:
+                      type: string
+                      format: date
+                - name: to
+                  in: query
+                  schema:
+                      type: string
+                      format: date
+                - $ref: "#/components/parameters/Limit"
+                - $ref: "#/components/parameters/Offset"
+            responses:
+                "200":
+                    description: Daily sentiment rows
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/SentimentRow"
 
-  /news-analysis:
-    get:
-      tags: [news-analysis]
-      summary: Get aggregated sentiment analysis for all tickers
-      parameters:
-        - name: symbol
-          in: query
-          schema:
-            type: string
-          description: Filter by ticker symbol
-        - name: from
-          in: query
-          schema:
-            type: string
-            format: date
-        - name: to
-          in: query
-          schema:
-            type: string
-            format: date
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-      responses:
-        '200':
-          description: Daily sentiment rows
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SentimentRow'
+    /api/news-analysis/latest:
+        get:
+            tags: [news-analysis]
+            summary: Get the history for all news analysis for all tickers
+            parameters:
+                - name: symbol
+                  in: query
+                  schema:
+                      type: string
+                      description: Filter by ticker symbol
+            responses:
+                "200":
+                    description: Daily sentiment rows
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/SentimentRow"
 
-  /news-analysis/latest:
-    get:
-      tags: [news-analysis]
-      summary: Get the history for all news analysis for all tickers
-      parameters:
-        - name: symbol
-          in: query
-          schema:
-            type: string
-            description: Filter by ticker symbol
-      responses:
-        '200':
-          description: Daily sentiment rows
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SentimentRow'
+    /api/news-analysis/{article_id}:
+        get:
+            tags: [news-analysis]
+            summary: Get daily aggregated sentiment analysis for a ticker
+            parameters:
+                - $ref: "#/components/parameters/ArticleId"
 
-  /news-analysis/{article_id}:
-    get:
-      tags: [news-analysis]
-      summary: Get daily aggregated sentiment analysis for a ticker
-      parameters:
-        - $ref: '#/components/parameters/ArticleId'
-        
-      responses:
-        '200':
-          description: Daily sentiment rows
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SentimentRow'
-        '404':
-          $ref: '#/components/responses/NotFound'
+            responses:
+                "200":
+                    description: Daily sentiment rows
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/SentimentRow"
+                "404":
+                    $ref: "#/components/responses/NotFound"
 
+    # ── PREDICTIONS ───────────────────────────────────────────────────────────
 
-  # ── PREDICTIONS ───────────────────────────────────────────────────────────
+    /api/predictions/{symbol}:
+        get:
+            tags: [predictions]
+            summary: Get predictions for a ticker (regression and classification)
+            parameters:
+                - $ref: "#/components/parameters/Symbol"
+                - name: horizon_days
+                  in: query
+                  schema:
+                      type: integer
+                      enum: [1, 5, 20]
+                  description: Forecast horizon in trading days
+                - name: model_type
+                  in: query
+                  schema:
+                      type: string
+                      enum: [regression, classification, all]
+                      default: all
+                - name: from
+                  in: query
+                  schema:
+                      type: string
+                      format: date
+                - name: to
+                  in: query
+                  schema:
+                      type: string
+                      format: date
+                - $ref: "#/components/parameters/Limit"
+            responses:
+                "200":
+                    description: Prediction records
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/PredictionsResponse"
+                "404":
+                    $ref: "#/components/responses/NotFound"
 
-  /predictions/{symbol}:
-    get:
-      tags: [predictions]
-      summary: Get predictions for a ticker (regression and classification)
-      parameters:
-        - $ref: '#/components/parameters/Symbol'
-        - name: horizon_days
-          in: query
-          schema:
-            type: integer
-            enum: [1, 5, 20]
-          description: Forecast horizon in trading days
-        - name: model_type
-          in: query
-          schema:
-            type: string
-            enum: [regression, classification, all]
-            default: all
-        - name: from
-          in: query
-          schema:
-            type: string
-            format: date
-        - name: to
-          in: query
-          schema:
-            type: string
-            format: date
-        - $ref: '#/components/parameters/Limit'
-      responses:
-        '200':
-          description: Prediction records
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PredictionsResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
+    /api/predictions/{symbol}/latest:
+        get:
+            tags: [predictions]
+            summary: Get the most recent prediction for a ticker across all horizons
+            parameters:
+                - $ref: "#/components/parameters/Symbol"
+            responses:
+                "200":
+                    description: Latest prediction set
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/LatestPrediction"
+                "404":
+                    $ref: "#/components/responses/NotFound"
 
-  /predictions/{symbol}/latest:
-    get:
-      tags: [predictions]
-      summary: Get the most recent prediction for a ticker across all horizons
-      parameters:
-        - $ref: '#/components/parameters/Symbol'
-      responses:
-        '200':
-          description: Latest prediction set
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LatestPrediction'
-        '404':
-          $ref: '#/components/responses/NotFound'
+    /api/predictions/models:
+        get:
+            tags: [predictions]
+            summary: List all models in the model registry
+            parameters:
+                - name: model_type
+                  in: query
+                  schema:
+                      type: string
+                      enum: [regression, classification]
+            responses:
+                "200":
+                    description: Model registry entries
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/ModelRegistryEntry"
 
-  /predictions/models:
-    get:
-      tags: [predictions]
-      summary: List all models in the model registry
-      parameters:
-        - name: model_type
-          in: query
-          schema:
-            type: string
-            enum: [regression, classification]
-      responses:
-        '200':
-          description: Model registry entries
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ModelRegistryEntry'
-
-  /predictions/models/{model_id}/performance:
-    get:
-      tags: [predictions]
-      summary: Get backtesting and drift performance metrics for a model
-      parameters:
-        - name: model_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: horizon_days
-          in: query
-          schema:
-            type: integer
-            enum: [1, 5, 20]
-        - name: eval_window_days
-          in: query
-          schema:
-            type: integer
-            enum: [30, 90, 252]
-      responses:
-        '200':
-          description: Performance metrics
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ModelPerformance'
+    /api/predictions/models/{model_id}/performance:
+        get:
+            tags: [predictions]
+            summary: Get backtesting and drift performance metrics for a model
+            parameters:
+                - name: model_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                      format: uuid
+                - name: horizon_days
+                  in: query
+                  schema:
+                      type: integer
+                      enum: [1, 5, 20]
+                - name: eval_window_days
+                  in: query
+                  schema:
+                      type: integer
+                      enum: [30, 90, 252]
+            responses:
+                "200":
+                    description: Performance metrics
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/ModelPerformance"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # COMPONENTS
 # ─────────────────────────────────────────────────────────────────────────────
 components:
+    securitySchemes:
+        BearerAuth:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
+            description: JWT token issued by Clerk Auth via /auth/login
 
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT token issued by Clerk Auth via /auth/login
+    parameters:
+        Symbol:
+            name: symbol
+            in: path
+            required: true
+            schema:
+                type: string
+                example: AAPL
+        ArticleId:
+            name: article_id
+            in: path
+            required: true
+            schema:
+                type: string
+                example: uuid()
+        AlertId:
+            name: alert_id
+            in: path
+            required: true
+            schema:
+                type: integer
+        WatchlistId:
+            name: watchlist_id
+            in: path
+            required: true
+            schema:
+                type: integer
+        Limit:
+            name: limit
+            in: query
+            schema:
+                type: integer
+                default: 50
+                maximum: 500
+        Offset:
+            name: offset
+            in: query
+            schema:
+                type: integer
+                default: 0
 
-  parameters:
-    Symbol:
-      name: symbol
-      in: path
-      required: true
-      schema:
-        type: string
-        example: AAPL
-    ArticleId:
-      name: article_id
-      in: path
-      required: true
-      schema:
-        type: string
-        example: uuid()
-    AlertId:
-      name: alert_id
-      in: path
-      required: true
-      schema:
-        type: integer
-    WatchlistId:
-      name: watchlist_id
-      in: path
-      required: true
-      schema:
-        type: integer
-    Limit:
-      name: limit
-      in: query
-      schema:
-        type: integer
-        default: 50
-        maximum: 500
-    Offset:
-      name: offset
-      in: query
-      schema:
-        type: integer
-        default: 0
+    responses:
+        Unauthorized:
+            description: Missing or invalid JWT
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/Error"
+        NotFound:
+            description: Resource not found
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/Error"
+        ValidationError:
+            description: Request body failed validation
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/ValidationErrorDetail"
 
-  responses:
-    Unauthorized:
-      description: Missing or invalid JWT
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    ValidationError:
-      description: Request body failed validation
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ValidationErrorDetail'
+    schemas:
+        # ── STOCKS ──────────────────────────────────────────────────────────────
 
-  schemas:
-
-    # ── STOCKS ──────────────────────────────────────────────────────────────
-
-    Ticker:
-      type: object
-      properties:
-        ticker_id:
-          type: integer
-        symbol:
-          type: string
-          example: AAPL
-        company:
-          type: string
-          example: Apple Inc.
-        sector:
-          type: string
-          example: Technology
-        industry:
-          type: string
-        exchange:
-          type: string
-          example: NASDAQ
-        currency:
-          type: string
-          example: USD
-        is_active:
-          type: boolean
-        listed_at:
-          type: string
-          format: date
-        updated_at:
-          type: string
-          format: date-time
-
-    PaginatedTickers:
-      type: object
-      properties:
-        total:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Ticker'
-
-    OHLCVBar:
-      type: object
-      properties:
-        trade_date:
-          type: string
-          format: date
-        open:
-          type: number
-          format: double
-        high:
-          type: number
-          format: double
-        low:
-          type: number
-          format: double
-        close:
-          type: number
-          format: double
-        adj_close:
-          type: number
-          format: double
-        volume:
-          type: integer
-          format: int64
-        vwap:
-          type: number
-          format: double
-
-    TechnicalFeatures:
-      type: object
-      properties:
-        trade_date:
-          type: string
-          format: date
-        sma_5:
-          type: number
-        sma_10:
-          type: number
-        sma_20:
-          type: number
-        sma_50:
-          type: number
-        ema_12:
-          type: number
-        ema_26:
-          type: number
-        rsi_14:
-          type: number
-          description: 0–100
-        macd:
-          type: number
-        macd_signal:
-          type: number
-        macd_hist:
-          type: number
-        boll_upper:
-          type: number
-        boll_lower:
-          type: number
-        boll_mid:
-          type: number
-        atr_14:
-          type: number
-        obv:
-          type: integer
-          format: int64
-        vwap:
-          type: number
-
-    # ── NEWS ────────────────────────────────────────────────────────────────
-
-    NewsArticle:
-      type: object
-      properties:
-        article_id:
-          type: string
-          format: uuid
-        ticker_id:
-          type: integer
-        symbol:
-          type: string
-        headline:
-          type: string
-        body_clean:
-          type: string
-        published_at:
-          type: string
-          format: date-time
-        market_session:
-          type: string
-          enum: [pre_market, intraday, after_hours, overnight]
-        source:
-          type: string
-        word_count:
-          type: integer
-        lang:
-          type: string
-          example: en
-
-    PaginatedNews:
-      type: object
-      properties:
-        total:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/NewsArticle'
-
-    # ── SENTIMENT ───────────────────────────────────────────────────────────
-
-    SentimentRow:
-      type: object
-      properties:
-        symbol:
-          type: string
-        trade_date:
-          type: string
-          format: date
-        article_count:
-          type: integer
-        pre_mkt_count:
-          type: integer
-        after_hrs_count:
-          type: integer
-        sentiment_score:
-          type: number
-          format: double
-          description: Mean sentiment across daily articles, range -1.0 to 1.0
-        sentiment_label:
-          type: string
-          enum: [Positive, Neutral, Negative]
-        sentiment_std:
-          type: number
-          description: Disagreement across articles
-        score_tier1:
-          type: number
-          description: Sentiment from tier-1 sources only
-        avg_relevance:
-          type: number
-          description: Model confidence that articles are stock-relevant
-        computed_at:
-          type: string
-          format: date-time
-
-    # ── PREDICTIONS ─────────────────────────────────────────────────────────
-
-    RegressionPrediction:
-      type: object
-      properties:
-        pred_id:
-          type: string
-          format: uuid
-        symbol:
-          type: string
-        prediction_date:
-          type: string
-          format: date
-        target_date:
-          type: string
-          format: date
-        horizon_days:
-          type: integer
-          enum: [1, 5, 20]
-        model_id:
-          type: string
-          format: uuid
-        pred_close:
-          type: number
-          description: Predicted closing price
-        pred_return:
-          type: number
-          description: Predicted % return
-        pred_log_return:
-          type: number
-        confidence_lo:
-          type: number
-          description: Lower bound of 95% prediction interval
-        confidence_hi:
-          type: number
-          description: Upper bound of 95% prediction interval
-        actual_close:
-          type: number
-          nullable: true
-        actual_return:
-          type: number
-          nullable: true
-        mae:
-          type: number
-          nullable: true
-        predicted_at:
-          type: string
-          format: date-time
-
-    ClassificationPrediction:
-      type: object
-      properties:
-        pred_id:
-          type: string
-          format: uuid
-        symbol:
-          type: string
-        prediction_date:
-          type: string
-          format: date
-        target_date:
-          type: string
-          format: date
-        horizon_days:
-          type: integer
-          enum: [1, 5, 20]
-        model_id:
-          type: string
-          format: uuid
-        pred_direction:
-          type: integer
-          enum: [1, 0, -1]
-          description: 1 = Up, 0 = Flat, -1 = Down
-        prob_up:
-          type: number
-          format: double
-        prob_flat:
-          type: number
-          format: double
-        prob_down:
-          type: number
-          format: double
-        pred_confidence:
-          type: number
-          description: max(prob_up, prob_flat, prob_down)
-        is_high_confidence:
-          type: boolean
-        actual_direction:
-          type: integer
-          nullable: true
-        is_correct:
-          type: boolean
-          nullable: true
-        predicted_at:
-          type: string
-          format: date-time
-
-    PredictionsResponse:
-      type: object
-      properties:
-        symbol:
-          type: string
-        regression:
-          type: array
-          items:
-            $ref: '#/components/schemas/RegressionPrediction'
-        classification:
-          type: array
-          items:
-            $ref: '#/components/schemas/ClassificationPrediction'
-
-    LatestPrediction:
-      type: object
-      properties:
-        symbol:
-          type: string
-        regression:
-          type: object
-          description: Keyed by horizon_days (1, 5, 20)
-          additionalProperties:
-            $ref: '#/components/schemas/RegressionPrediction'
-        classification:
-          type: object
-          description: Keyed by horizon_days (1, 5, 20)
-          additionalProperties:
-            $ref: '#/components/schemas/ClassificationPrediction'
-
-    ModelRegistryEntry:
-      type: object
-      properties:
-        model_id:
-          type: string
-          format: uuid
-        model_name:
-          type: string
-          example: xgboost_v3_regression
-        model_type:
-          type: string
-          enum: [regression, classification]
-        version:
-          type: string
-          example: 3.1.0
-        horizon_days:
-          type: integer
-          enum: [1, 5, 20]
-        algorithm:
-          type: string
-          example: XGBoost
-        feature_set:
-          type: string
-          enum: [price_only, price+news, news_only]
-        training_start_date:
-          type: string
-          format: date
-        training_end_date:
-          type: string
-          format: date
-        val_metric_name:
-          type: string
-        val_metric_value:
-          type: number
-        is_champion:
-          type: boolean
-        registered_at:
-          type: string
-          format: date-time
-
-    ModelPerformance:
-      type: object
-      properties:
-        perf_id:
-          type: string
-          format: uuid
-        model_id:
-          type: string
-          format: uuid
-        symbol:
-          type: string
-          nullable: true
-          description: null means aggregate across all tickers
-        eval_date:
-          type: string
-          format: date
-        horizon_days:
-          type: integer
-        eval_window_days:
-          type: integer
-        n_samples:
-          type: integer
-        mae:
-          type: number
-        rmse:
-          type: number
-        mape:
-          type: number
-        r2_score:
-          type: number
-        directional_accuracy:
-          type: number
-        accuracy:
-          type: number
-        precision_score:
-          type: number
-        recall:
-          type: number
-        f1_score:
-          type: number
-        auc_roc:
-          type: number
-        matthews_corr:
-          type: number
-        drift_flag:
-          type: boolean
-        drift_severity:
-          type: string
-          enum: [none, warning, critical]
-        evaluated_at:
-          type: string
-          format: date-time
-
-
-    # ── COMMON ──────────────────────────────────────────────────────────────
-
-    Error:
-      type: object
-      properties:
-        detail:
-          type: string
-        code:
-          type: string
-
-    ValidationErrorDetail:
-      type: object
-      properties:
-        detail:
-          type: array
-          items:
+        Ticker:
             type: object
             properties:
-              loc:
-                type: array
+                ticker_id:
+                    type: integer
+                symbol:
+                    type: string
+                    example: AAPL
+                company:
+                    type: string
+                    example: Apple Inc.
+                sector:
+                    type: string
+                    example: Technology
+                industry:
+                    type: string
+                exchange:
+                    type: string
+                    example: NASDAQ
+                currency:
+                    type: string
+                    example: USD
+                is_active:
+                    type: boolean
+                listed_at:
+                    type: string
+                    format: date
+                updated_at:
+                    type: string
+                    format: date-time
+
+        PaginatedTickers:
+            type: object
+            properties:
+                total:
+                    type: integer
+                limit:
+                    type: integer
+                offset:
+                    type: integer
                 items:
-                  type: string
-              msg:
-                type: string
-              type:
-                type: string
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/Ticker"
+
+        OHLCVBar:
+            type: object
+            properties:
+                trade_date:
+                    type: string
+                    format: date
+                open:
+                    type: number
+                    format: double
+                high:
+                    type: number
+                    format: double
+                low:
+                    type: number
+                    format: double
+                close:
+                    type: number
+                    format: double
+                adj_close:
+                    type: number
+                    format: double
+                volume:
+                    type: integer
+                    format: int64
+                vwap:
+                    type: number
+                    format: double
+
+        TechnicalFeatures:
+            type: object
+            properties:
+                trade_date:
+                    type: string
+                    format: date
+                sma_5:
+                    type: number
+                sma_10:
+                    type: number
+                sma_20:
+                    type: number
+                sma_50:
+                    type: number
+                ema_12:
+                    type: number
+                ema_26:
+                    type: number
+                rsi_14:
+                    type: number
+                    description: 0–100
+                macd:
+                    type: number
+                macd_signal:
+                    type: number
+                macd_hist:
+                    type: number
+                boll_upper:
+                    type: number
+                boll_lower:
+                    type: number
+                boll_mid:
+                    type: number
+                atr_14:
+                    type: number
+                obv:
+                    type: integer
+                    format: int64
+                vwap:
+                    type: number
+
+        # ── NEWS ────────────────────────────────────────────────────────────────
+
+        NewsArticle:
+            type: object
+            properties:
+                article_id:
+                    type: string
+                    format: uuid
+                ticker_id:
+                    type: integer
+                symbol:
+                    type: string
+                headline:
+                    type: string
+                body_clean:
+                    type: string
+                published_at:
+                    type: string
+                    format: date-time
+                market_session:
+                    type: string
+                    enum: [pre_market, intraday, after_hours, overnight]
+                source:
+                    type: string
+                word_count:
+                    type: integer
+                lang:
+                    type: string
+                    example: en
+
+        PaginatedNews:
+            type: object
+            properties:
+                total:
+                    type: integer
+                limit:
+                    type: integer
+                offset:
+                    type: integer
+                items:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/NewsArticle"
+
+        # ── SENTIMENT ───────────────────────────────────────────────────────────
+
+        SentimentRow:
+            type: object
+            properties:
+                symbol:
+                    type: string
+                trade_date:
+                    type: string
+                    format: date
+                article_count:
+                    type: integer
+                pre_mkt_count:
+                    type: integer
+                after_hrs_count:
+                    type: integer
+                sentiment_score:
+                    type: number
+                    format: double
+                    description: Mean sentiment across daily articles, range -1.0 to 1.0
+                sentiment_label:
+                    type: string
+                    enum: [Positive, Neutral, Negative]
+                sentiment_std:
+                    type: number
+                    description: Disagreement across articles
+                score_tier1:
+                    type: number
+                    description: Sentiment from tier-1 sources only
+                avg_relevance:
+                    type: number
+                    description: Model confidence that articles are stock-relevant
+                computed_at:
+                    type: string
+                    format: date-time
+
+        # ── PREDICTIONS ─────────────────────────────────────────────────────────
+
+        RegressionPrediction:
+            type: object
+            properties:
+                pred_id:
+                    type: string
+                    format: uuid
+                symbol:
+                    type: string
+                prediction_date:
+                    type: string
+                    format: date
+                target_date:
+                    type: string
+                    format: date
+                horizon_days:
+                    type: integer
+                    enum: [1, 5, 20]
+                model_id:
+                    type: string
+                    format: uuid
+                pred_close:
+                    type: number
+                    description: Predicted closing price
+                pred_return:
+                    type: number
+                    description: Predicted % return
+                pred_log_return:
+                    type: number
+                confidence_lo:
+                    type: number
+                    description: Lower bound of 95% prediction interval
+                confidence_hi:
+                    type: number
+                    description: Upper bound of 95% prediction interval
+                actual_close:
+                    type: number
+                    nullable: true
+                actual_return:
+                    type: number
+                    nullable: true
+                mae:
+                    type: number
+                    nullable: true
+                predicted_at:
+                    type: string
+                    format: date-time
+
+        ClassificationPrediction:
+            type: object
+            properties:
+                pred_id:
+                    type: string
+                    format: uuid
+                symbol:
+                    type: string
+                prediction_date:
+                    type: string
+                    format: date
+                target_date:
+                    type: string
+                    format: date
+                horizon_days:
+                    type: integer
+                    enum: [1, 5, 20]
+                model_id:
+                    type: string
+                    format: uuid
+                pred_direction:
+                    type: integer
+                    enum: [1, 0, -1]
+                    description: 1 = Up, 0 = Flat, -1 = Down
+                prob_up:
+                    type: number
+                    format: double
+                prob_flat:
+                    type: number
+                    format: double
+                prob_down:
+                    type: number
+                    format: double
+                pred_confidence:
+                    type: number
+                    description: max(prob_up, prob_flat, prob_down)
+                is_high_confidence:
+                    type: boolean
+                actual_direction:
+                    type: integer
+                    nullable: true
+                is_correct:
+                    type: boolean
+                    nullable: true
+                predicted_at:
+                    type: string
+                    format: date-time
+
+        PredictionsResponse:
+            type: object
+            properties:
+                symbol:
+                    type: string
+                regression:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/RegressionPrediction"
+                classification:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/ClassificationPrediction"
+
+        LatestPrediction:
+            type: object
+            properties:
+                symbol:
+                    type: string
+                regression:
+                    type: object
+                    description: Keyed by horizon_days (1, 5, 20)
+                    additionalProperties:
+                        $ref: "#/components/schemas/RegressionPrediction"
+                classification:
+                    type: object
+                    description: Keyed by horizon_days (1, 5, 20)
+                    additionalProperties:
+                        $ref: "#/components/schemas/ClassificationPrediction"
+
+        ModelRegistryEntry:
+            type: object
+            properties:
+                model_id:
+                    type: string
+                    format: uuid
+                model_name:
+                    type: string
+                    example: xgboost_v3_regression
+                model_type:
+                    type: string
+                    enum: [regression, classification]
+                version:
+                    type: string
+                    example: 3.1.0
+                horizon_days:
+                    type: integer
+                    enum: [1, 5, 20]
+                algorithm:
+                    type: string
+                    example: XGBoost
+                feature_set:
+                    type: string
+                    enum: [price_only, price+news, news_only]
+                training_start_date:
+                    type: string
+                    format: date
+                training_end_date:
+                    type: string
+                    format: date
+                val_metric_name:
+                    type: string
+                val_metric_value:
+                    type: number
+                is_champion:
+                    type: boolean
+                registered_at:
+                    type: string
+                    format: date-time
+
+        ModelPerformance:
+            type: object
+            properties:
+                perf_id:
+                    type: string
+                    format: uuid
+                model_id:
+                    type: string
+                    format: uuid
+                symbol:
+                    type: string
+                    nullable: true
+                    description: null means aggregate across all tickers
+                eval_date:
+                    type: string
+                    format: date
+                horizon_days:
+                    type: integer
+                eval_window_days:
+                    type: integer
+                n_samples:
+                    type: integer
+                mae:
+                    type: number
+                rmse:
+                    type: number
+                mape:
+                    type: number
+                r2_score:
+                    type: number
+                directional_accuracy:
+                    type: number
+                accuracy:
+                    type: number
+                precision_score:
+                    type: number
+                recall:
+                    type: number
+                f1_score:
+                    type: number
+                auc_roc:
+                    type: number
+                matthews_corr:
+                    type: number
+                drift_flag:
+                    type: boolean
+                drift_severity:
+                    type: string
+                    enum: [none, warning, critical]
+                evaluated_at:
+                    type: string
+                    format: date-time
+
+        # ── COMMON ──────────────────────────────────────────────────────────────
+
+        Error:
+            type: object
+            properties:
+                detail:
+                    type: string
+                code:
+                    type: string
+
+        ValidationErrorDetail:
+            type: object
+            properties:
+                detail:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            loc:
+                                type: array
+                                items:
+                                    type: string
+                            msg:
+                                type: string
+                            type:
+                                type: string

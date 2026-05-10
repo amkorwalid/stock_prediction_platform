@@ -18,5 +18,12 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 OpenAPI docs:
+
 - Swagger UI: http://localhost:8000/docs
 - OpenAPI JSON: http://localhost:8000/openapi.json
+
+Base API path:
+
+- Local FastAPI routes are served under http://localhost:8000/api
+- This matches an Nginx reverse proxy that forwards /api/\* to the backend
+- Health check is available at http://localhost:8000/api/health
