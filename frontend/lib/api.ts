@@ -62,7 +62,10 @@ export function getApiBaseUrl(): string {
 
 export function getApiDocsUrl(): string {
   const apiBase = getApiBaseUrl();
-  return `${apiBase.slice(0, -4)}/docs`;
+  if (apiBase.endsWith("/api")) {
+    return `${apiBase.slice(0, -4)}/docs`;
+  }
+  return `${apiBase}/docs`;
 }
 
 async function request<T>(path: string): Promise<T | null> {

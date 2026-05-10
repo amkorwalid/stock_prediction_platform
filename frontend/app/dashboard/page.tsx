@@ -15,6 +15,10 @@ function sentimentColor(label?: string) {
   return "text-yellow-300";
 }
 
+function formatProbability(value: number) {
+  return `${(value * 100).toFixed(1)}%`;
+}
+
 type DashboardPageProps = {
   searchParams?: Promise<{ symbol?: string }>;
 };
@@ -112,9 +116,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                       >
                         <p className="text-sm subtle">{horizon}</p>
                         <p className="mt-1 text-xs">
-                          Up {(row.prob_up * 100).toFixed(1)}% · Flat{" "}
-                          {(row.prob_flat * 100).toFixed(1)}% · Down{" "}
-                          {(row.prob_down * 100).toFixed(1)}%
+                          Up {formatProbability(row.prob_up)} · Flat{" "}
+                          {formatProbability(row.prob_flat)} · Down{" "}
+                          {formatProbability(row.prob_down)}
                         </p>
                       </li>
                     ))}
