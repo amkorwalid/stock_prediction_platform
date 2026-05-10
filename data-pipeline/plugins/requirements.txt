@@ -1,0 +1,23 @@
+# Stock Prediction Platform — pipeline server dependencies
+# Install with: pip install -r requirements.txt --break-system-packages
+# (or into your Airflow virtualenv)
+
+# ── Airflow (already installed on server — listed for reference only) ──────
+# apache-airflow[postgres,celery]==2.9.*
+
+# ── Data fetching ──────────────────────────────────────────────────────────
+yfinance>=0.2.40          # Yahoo Finance OHLCV
+requests>=2.31.0          # Alpha Vantage + OpenAI HTTP calls
+
+# ── Data processing ────────────────────────────────────────────────────────
+pandas>=2.1.0
+numpy>=1.26.0
+
+# ── ML ─────────────────────────────────────────────────────────────────────
+scikit-learn>=1.4.0
+
+# ── Database ───────────────────────────────────────────────────────────────
+psycopg2-binary>=2.9.9    # Postgres driver; use psycopg2 (non-binary) in prod
+
+# ── Utilities ──────────────────────────────────────────────────────────────
+python-dateutil>=2.9.0

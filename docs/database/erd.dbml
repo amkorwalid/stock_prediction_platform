@@ -375,7 +375,6 @@ Table data_warehouse.feat_news_sentiment {
     (ticker_id, date_id) [unique, name: "uq_feat_sent_ticker_date"]
   }
 
-  Note: "Populated by NLP pipeline reading from fact_news_articles. One row per ticker per day."
 }
 
 

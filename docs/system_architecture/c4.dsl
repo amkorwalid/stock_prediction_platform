@@ -4,7 +4,7 @@ workspace "Stock Prediction Platform" {
 
         # ── Actors ──────────────────────────────────────────────
         user = person "Trader & Investor" {
-            description "Views price predictions."
+            description "Views price and movement predictions."
         }
 
         # ── Internal system ─────────────────────────────────────
@@ -100,7 +100,7 @@ workspace "Stock Prediction Platform" {
         system -> news_api      "Fetches financial news"          "HTTPS/REST"
         system -> openai        "Analyses news sentiment"         "HTTPS/REST"
 
-       # L2 — Container
+        # L2 — Container
         user     -> nginx    "Accesses via browser"            "HTTPS"
         nginx    -> frontend "Forwards page requests"          "HTTP"
         nginx    -> backend  "Forwards /api/* requests"        "HTTP"
