@@ -7,6 +7,8 @@ import {
   getStocks,
 } from "@/lib/api";
 
+const DEFAULT_SYMBOL = "AAPL";
+
 function sentimentColor(label?: string) {
   if (label === "Positive") return "text-[var(--positive)]";
   if (label === "Negative") return "text-[var(--negative)]";
@@ -15,7 +17,7 @@ function sentimentColor(label?: string) {
 
 export default async function DashboardPage() {
   const stocks = await getStocks(8);
-  const activeSymbol = stocks[0]?.symbol ?? "AAPL";
+  const activeSymbol = stocks[0]?.symbol ?? DEFAULT_SYMBOL;
 
   const [prediction, news, sentiment] = await Promise.all([
     getLatestPrediction(activeSymbol),

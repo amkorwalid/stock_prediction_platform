@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
+const API_DOCS_URL = `${API_BASE.replace(/\/api\/?$/, "")}/docs`;
+
 export default function Home() {
   return (
     <div className="min-h-screen px-6 py-8 md:px-10">
@@ -21,7 +24,7 @@ export default function Home() {
               Open Dashboard
             </Link>
             <a
-              href="http://localhost:8000/docs"
+              href={API_DOCS_URL}
               target="_blank"
               rel="noreferrer"
               className="rounded-full border border-[var(--border)] px-6 py-3 text-sm font-semibold transition hover:bg-[var(--surface-soft)]"
