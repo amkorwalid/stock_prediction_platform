@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { getApiDocsUrl } from "@/lib/api";
 
-const API_DOCS_URL = getApiDocsUrl();
-
 export default function Home() {
+  const apiDocsUrl = getApiDocsUrl();
+
   return (
     <div className="min-h-screen px-6 py-8 md:px-10">
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-8">
@@ -24,7 +24,7 @@ export default function Home() {
               Open Dashboard
             </Link>
             <a
-              href={API_DOCS_URL}
+              href={apiDocsUrl}
               target="_blank"
               rel="noreferrer"
               className="rounded-full border border-[var(--border)] px-6 py-3 text-sm font-semibold transition hover:bg-[var(--surface-soft)]"

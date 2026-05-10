@@ -46,22 +46,28 @@ export type LatestPrediction = {
   classification: Record<string, LatestClassificationPrediction>;
 };
 
-export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
+export function getApiBaseUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+  if (configured.endsWith("/api/")) {
+    return configured.slice(0, -1);
+  }
+  if (configured.endsWith("/api")) {
+    return configured;
+  }
+  if (configured.endsWith("/")) {
+    return `${configured.slice(0, -1)}/api`;
+  }
+  return `${configured}/api`;
+}
 
 export function getApiDocsUrl(): string {
-  if (API_BASE.endsWith("/api/")) {
-    return `${API_BASE.slice(0, -5)}/docs`;
-  }
-  if (API_BASE.endsWith("/api")) {
-    return `${API_BASE.slice(0, -4)}/docs`;
-  }
-  return `${API_BASE}/docs`;
+  const apiBase = getApiBaseUrl();
+  return `${apiBase.slice(0, -4)}/docs`;
 }
 
 async function request<T>(path: string): Promise<T | null> {
   try {
-    const response = await fetch(`${API_BASE}${path}`, {
+    const response = await fetch(`${getApiBaseUrl()}${path}`, {
       cache: "no-store",
       headers: { Accept: "application/json" },
     });
